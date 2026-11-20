@@ -15,10 +15,17 @@ example of st.session_state and of a page that only *assembles* the package.
 """
 
 import os
+import sys
 
 import pandas as pd
 import streamlit as st
 
+# Streamlit adds the pages directory to the import path, not necessarily the
+# project root where the rivals package lives.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# pyright: reportMissingImports=false
+# pylint: disable=wrong-import-position,import-error
 from rivals import (
     DECISIONS_FILE,
     MENUS_FILE,
