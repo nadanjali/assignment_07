@@ -209,4 +209,3 @@ def record_decision(decisions: pd.DataFrame, cafe: str, item: str,
     new_decision = pd.DataFrame([{ "cafe": cafe, "item": item, "matched_to": matched_to }])
     updated_decisions = pd.concat([filtered_decisions, new_decision], ignore_index=True)
     return updated_decisions[DECISION_COLUMNS]
-    pass

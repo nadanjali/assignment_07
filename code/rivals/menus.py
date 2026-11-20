@@ -46,7 +46,8 @@ def menus_table(rows: list[dict]) -> pd.DataFrame:
     Extra keys a scraper might add are left out. An empty list gives an empty
     table that still has the five columns.
     """
-    return pd.DataFrame(rows, columns=MENU_COLUMNS)
+    columns = [column for column in MENU_COLUMNS if column != "kind"]
+    return pd.DataFrame(rows, columns=columns)
 
 def add_kinds(menus: pd.DataFrame, categories: pd.DataFrame) -> pd.DataFrame:
     """`menus` plus a `kind` column ("drink" or "food"): each row's (`cafe`,
@@ -71,4 +72,4 @@ def build_dataset(rival_rows: list[dict]) -> pd.DataFrame:
     combined = pd.concat([our_menu, rival_menu], ignore_index=True)
     categories = pd.read_csv(CATEGORIES_FILE)
     final_dataset = add_kinds(combined, categories)
-    return final_dataset
+    return final_dataset[MENU_COLUMNS].reset_index(drop=True)

@@ -12,11 +12,16 @@ Test it: pytest tests/test_pipeline.py -k analysis_page
 """
 
 import os
+import sys
 
 import pandas as pd
 import streamlit as st
 
-from rivals import (
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+from rivals import (  # pylint: disable=wrong-import-position,import-error
     ABOVE_ALL,
     ABOVE_AVERAGE,
     BELOW_ALL,
@@ -29,14 +34,8 @@ from rivals import (
     match_items,
     price_table,
 )
-from rivals.settings import DECISION_COLUMNS
+from rivals.settings import DECISION_COLUMNS  # pylint: disable=wrong-import-position,import-error
 
-# --- The page: the algorithm, step by step ------------------------------------------
-#
-# Write the code for each step below its comment. The tests
-# (pytest tests/test_pipeline.py -k analysis_page) check the title, the metrics,
-# the tab labels, the warning, the product filter, and the tables.
-#
 # 1. HEADING AND DATA
 #    st.set_page_config(layout="wide") — first, so the price table has room for
 #    a column per café
@@ -72,3 +71,63 @@ from rivals.settings import DECISION_COLUMNS
 #    st.subheader "Only them — what we don't sell yet" and st.dataframe of the
 #    gaps rows where `where` is "only them"; then st.subheader "Only us — what sets
 #    us apart" and the "only us" rows.
+st.set_page_config(layout="wide")
+st.title("Salt City: Prices and Gaps")
+
+if not os.path.exists(MENUS_FILE):
+    st.info("No menus yet — scrape them on the Scrape page first.")
+    st.stop()
+
+menus = pd.read_csv(MENUS_FILE)
+if os.path.exists(DECISIONS_FILE):
+    decisions = pd.read_csv(DECISIONS_FILE)
+else:
+    decisions = pd.DataFrame(columns=DECISION_COLUMNS)
+
+matches = match_items(menus, decisions)
+waiting = int((matches["status"] == "unreviewed").sum())
+if waiting:
+    st.warning(
+        f"{waiting} match{'es' if waiting != 1 else ''} are unreviewed and "
+        "left out of this analysis. Finish them on the Review Matches page."
+    )
+
+menus = add_canonical(menus, matches)
+prices = price_table(menus)
+comparison = compare_prices(prices)
+gaps = gap_analysis(menus)
+
+prices_tab, gaps_tab = st.tabs(["Prices", "Gaps"])
+
+with prices_tab:
+    below_mask = comparison["our_position"].isin([BELOW_ALL, BELOW_AVERAGE])
+    above_mask = comparison["our_position"].isin([ABOVE_ALL, ABOVE_AVERAGE])
+
+    below_column, above_column = st.columns(2)
+    below_column.metric("Priced below the market", int(below_mask.sum()))
+    above_column.metric("Priced above the market", int(above_mask.sum()))
+
+    product_names = sorted(comparison["canonical"].dropna().unique())
+    products = st.multiselect(
+        "Products",
+        product_names,
+        key="products",
+        placeholder="All products",
+    )
+    if products:
+        shown = comparison[comparison["canonical"].isin(products)]
+    else:
+        shown = comparison
+
+    st.dataframe(shown, hide_index=True)
+    st.caption(
+        "👍👍 lower than all of them · 👍 lower than their average · 👉👈 average · "
+        "👎 higher than their average · 👎👎 higher than all of them"
+    )
+
+with gaps_tab:
+    st.subheader("Only them — what we don't sell yet")
+    st.dataframe(gaps[gaps["where"] == "only them"], hide_index=True)
+
+    st.subheader("Only us — what sets us apart")
+    st.dataframe(gaps[gaps["where"] == "only us"], hide_index=True)

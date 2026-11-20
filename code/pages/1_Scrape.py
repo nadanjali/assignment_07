@@ -13,20 +13,13 @@ Test it: pytest tests/test_pipeline.py -k scrape_page
 
 import os
 import sys
-from importlib import import_module
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-rivals = import_module("rivals")
-CAFES, MENUS_FILE, OUR_CAFE, run_scraper = (
-    rivals.CAFES,
-    rivals.MENUS_FILE,
-    rivals.OUR_CAFE,
-    rivals.run_scraper,
-)
+from rivals import CAFES, MENUS_FILE, OUR_CAFE, run_scraper
 
 # --- The page: the algorithm, step by step ------------------------------------------
 #

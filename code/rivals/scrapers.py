@@ -49,7 +49,6 @@ def scrape_lakeshore(page) -> list[dict]:
           category, card.inner_text())` — add its rows to your list.
     - Return all the rows in one list. (The cards have photos; you don't need them.)
     """
-    # TODO: your code here
     page.goto(cafe_url("Lakeshore Lattes"))
     rows = []
     headings = page.query_selector_all("h2.menu-section__title")
@@ -85,7 +84,6 @@ def scrape_hilltop(page) -> list[dict]:
       var_name="size", value_name="price"`.
     - Turn each melted row into a dict with the five keys; `clean_price()` the price.
     """
-    # TODO: your code here
     page.goto(cafe_url("Hilltop Grind"))
     categories = [h.inner_text() for h in page.query_selector_all("#menu h2")]
     tables = pd.read_html(StringIO(page.content()))
@@ -102,7 +100,6 @@ def scrape_hilltop(page) -> list[dict]:
                 "price": clean_price(row["price"])
             })
     return rows
-    pass
 
 
 def scrape_canal(page, shop: str = CANAL_SHOP) -> list[dict]:
@@ -130,7 +127,6 @@ def scrape_canal(page, shop: str = CANAL_SHOP) -> list[dict]:
       (the text of `#item-category` before " · "), and one row per
       `#sizes tbody tr` — its two `td` cells are the size and the price.
     """
-    # TODO: your code here
     page.goto(cafe_url("Canal Street Coffee"))
     page.get_by_label("Choose your shop").select_option(shop)
     page.get_by_role("button", name="Show full menu").click()
@@ -157,4 +153,3 @@ def scrape_canal(page, shop: str = CANAL_SHOP) -> list[dict]:
                 "price": price
             })
     return rows
-    pass
