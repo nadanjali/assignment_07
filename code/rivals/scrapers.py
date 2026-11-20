@@ -61,7 +61,6 @@ def scrape_lakeshore(page) -> list[dict]:
     return rows
 
 
-
 def scrape_hilltop(page) -> list[dict]:
     """Hilltop Grind: inside `<div id="menu">`, an `<h2>` and a `<table>` per category.
 
@@ -134,8 +133,13 @@ def scrape_canal(page, shop: str = CANAL_SHOP) -> list[dict]:
     while page.get_by_role("button", name="Show more").is_visible():
         count = page.locator("a.result-card").count()
         page.get_by_role("button", name="Show more").click()
-        page.wait_for_function(f"document.querySelectorAll('a.result-card').length > {count}")
-    hrefs = [card.get_attribute("href") for card in page.query_selector_all("a.result-card")]
+        page.wait_for_function(
+            f"document.querySelectorAll('a.result-card').length > {count}"
+        )
+    hrefs = [
+        card.get_attribute("href")
+        for card in page.query_selector_all("a.result-card")
+    ]
     rows = []
     for href in hrefs:
         page.goto(urljoin(cafe_url("Canal Street Coffee"), href))

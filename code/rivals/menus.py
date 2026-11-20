@@ -49,6 +49,7 @@ def menus_table(rows: list[dict]) -> pd.DataFrame:
     columns = [column for column in MENU_COLUMNS if column != "kind"]
     return pd.DataFrame(rows, columns=columns)
 
+
 def add_kinds(menus: pd.DataFrame, categories: pd.DataFrame) -> pd.DataFrame:
     """`menus` plus a `kind` column ("drink" or "food"): each row's (`cafe`,
     `category`) looked up in `categories` (data/categories.csv).

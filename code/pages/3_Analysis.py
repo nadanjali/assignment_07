@@ -17,9 +17,7 @@ import sys
 import pandas as pd
 import streamlit as st
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from rivals import (  # pylint: disable=wrong-import-position,import-error
     ABOVE_ALL,

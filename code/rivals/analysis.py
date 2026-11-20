@@ -134,7 +134,6 @@ def compare_prices(prices: pd.DataFrame) -> pd.DataFrame:
     return result.reset_index(drop=True)
 
 
-
 def gap_analysis(menus: pd.DataFrame) -> pd.DataFrame:
     """Which items only we sell, which only rivals sell, and which we both do.
 
@@ -155,7 +154,13 @@ def gap_analysis(menus: pd.DataFrame) -> pd.DataFrame:
     rivals = menus[
         (menus["cafe"] != OUR_CAFE) & menus["canonical"].notna()
     ][["cafe", "canonical", "kind"]].drop_duplicates()
-    merged = pd.merge(ours, rivals, on=["canonical", "kind"], how="outer", indicator=True)
+    merged = pd.merge(
+        ours,
+        rivals,
+        on=["canonical", "kind"],
+        how="outer",
+        indicator=True,
+    )
     merged["_merge"] = (
         merged["_merge"]
         .map({"left_only": "only us", "right_only": "only them", "both": "both"})

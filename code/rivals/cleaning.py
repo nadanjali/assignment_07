@@ -95,7 +95,6 @@ def parse_price_line(line: str) -> list[tuple[str, float]]:
     return result
 
 
-
 def card_rows(cafe: str, category: str, card_text: str) -> list[dict]:
     """One row per size for one menu card.
 

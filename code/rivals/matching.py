@@ -81,9 +81,13 @@ def top_candidates(name: str, choices: list[str], limit: int = 3) -> list[tuple]
     """
     normalized_name = normalize_name(name)
     normalized_choices = [normalize_name(choice) for choice in choices]
-    matches = process.extract(normalized_name, normalized_choices, scorer=fuzz.token_sort_ratio, limit=limit)
+    matches = process.extract(
+        normalized_name,
+        normalized_choices,
+        scorer=fuzz.token_sort_ratio,
+        limit=limit,
+    )
     return [(choices[index], round(score)) for match, score, index in matches]
-
 
 
 def match_band(score: float) -> str:
@@ -157,7 +161,10 @@ def match_items(menus: pd.DataFrame, decisions: pd.DataFrame) -> pd.DataFrame:
     """
     ours = menus[menus["cafe"] == OUR_CAFE]
     pool = dict(zip(ours["item"], ours["kind"]))
-    answers = {(row["cafe"], row["item"]): row["matched_to"] for row in decisions.to_dict("records")}
+    answers = {
+        (row["cafe"], row["item"]): row["matched_to"]
+        for row in decisions.to_dict("records")
+    }
     theirs = menus[menus["cafe"] != OUR_CAFE]
     rivals = theirs[["cafe", "item", "kind"]].drop_duplicates()
     rows = []
@@ -168,7 +175,8 @@ def match_items(menus: pd.DataFrame, decisions: pd.DataFrame) -> pd.DataFrame:
 
         if (cafe, item) in answers:
             status = "owner"
-            matched_to = answers[(cafe, item)] if answers[(cafe, item)] != NEW_ITEM else item
+            answer = answers[(cafe, item)]
+            matched_to = answer if answer != NEW_ITEM else item
         elif score >= AUTO_MATCH:
             status = "auto"
             matched_to = suggestions[0][0]
@@ -188,7 +196,16 @@ def match_items(menus: pd.DataFrame, decisions: pd.DataFrame) -> pd.DataFrame:
             "score": score,
             "suggestions": suggestions
         })
-    return pd.DataFrame(rows, columns=["cafe", "item", "kind", "status", "matched_to", "score", "suggestions"])
+    columns = [
+        "cafe",
+        "item",
+        "kind",
+        "status",
+        "matched_to",
+        "score",
+        "suggestions",
+    ]
+    return pd.DataFrame(rows, columns=columns)
 
 
 def record_decision(decisions: pd.DataFrame, cafe: str, item: str,
@@ -205,7 +222,10 @@ def record_decision(decisions: pd.DataFrame, cafe: str, item: str,
     - `pd.concat` them with a one-row DataFrame of the new answer; reset the index.
       (When nothing is kept, the one-row DataFrame is the answer.)
     """
-    filtered_decisions = decisions[~((decisions["cafe"] == cafe) & (decisions["item"] == item))]
-    new_decision = pd.DataFrame([{ "cafe": cafe, "item": item, "matched_to": matched_to }])
+    is_same_item = (decisions["cafe"] == cafe) & (decisions["item"] == item)
+    filtered_decisions = decisions[~is_same_item]
+    new_decision = pd.DataFrame(
+        [{"cafe": cafe, "item": item, "matched_to": matched_to}]
+    )
     updated_decisions = pd.concat([filtered_decisions, new_decision], ignore_index=True)
     return updated_decisions[DECISION_COLUMNS]
