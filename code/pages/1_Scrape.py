@@ -12,11 +12,21 @@ Test it: pytest tests/test_pipeline.py -k scrape_page
 """
 
 import os
+import sys
+from importlib import import_module
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
-from rivals import CAFES, MENUS_FILE, OUR_CAFE, run_scraper
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+rivals = import_module("rivals")
+CAFES, MENUS_FILE, OUR_CAFE, run_scraper = (
+    rivals.CAFES,
+    rivals.MENUS_FILE,
+    rivals.OUR_CAFE,
+    rivals.run_scraper,
+)
 
 # --- The page: the algorithm, step by step ------------------------------------------
 #
@@ -55,3 +65,39 @@ from rivals import CAFES, MENUS_FILE, OUR_CAFE, run_scraper
 #    st.dataframe(menus, hide_index=True)
 #    st.download_button "Download the dataset" with menus.to_csv(index=False),
 #       file_name "menus.csv", mime "text/csv", key "download"
+
+st.title("Salt City: Scrape the Rivals")
+st.markdown("Pick the cafés to scrape. Each run replaces the saved dataset.")
+cafes = st.multiselect("Cafés", options=list(CAFES), default=list(CAFES), key="cafes")
+if st.button("Scrape", key="scrape"):
+    if cafes:
+        with st.spinner("Scraping the cafés..."):
+            result = run_scraper(cafes)
+        if result.returncode == 0:
+            st.success(result.stdout.strip().splitlines()[-1])
+        else:
+            st.error("The scraper failed. See the error below:")
+            st.code("\n".join(result.stderr.strip().splitlines()[-10:]))
+    else:
+        st.warning("Pick at least one café to scrape.")
+
+if not os.path.exists(MENUS_FILE):
+    st.info("No menus yet — scrape a café to build the dataset.")
+    st.stop()
+
+menus = pd.read_csv(MENUS_FILE)
+theirs = menus[menus["cafe"] != OUR_CAFE]
+
+cafes_column, items_column, rows_column = st.columns(3)
+cafes_column.metric("Cafés", theirs["cafe"].nunique())
+items_column.metric("Items", theirs[["cafe", "item"]].drop_duplicates().shape[0])
+rows_column.metric("Rows", len(theirs))
+
+st.dataframe(menus, hide_index=True)
+st.download_button(
+    "Download the dataset",
+    menus.to_csv(index=False),
+    file_name="menus.csv",
+    mime="text/csv",
+    key="download",
+)
